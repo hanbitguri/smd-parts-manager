@@ -1,0 +1,6 @@
+/smd-parts
+/smd-parts.exe
+*.exe
+*.db-wal
+*.db-shm
+*.tmp

@@ -1,0 +1,6 @@
+.git
+*.exe
+smd-parts
+*.db-wal
+*.db-shm
+*.tmp

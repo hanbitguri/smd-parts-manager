@@ -1,0 +1,26 @@
+# Render Blueprint for the shared SMD parts manager.
+# A persistent disk keeps the live SQLite file across deploys. Render disks
+# require a paid web instance (smallest: 0.5c-512mb). On first boot, when
+# /data/smd_parts.db is missing, the server copies the image seed once.
+# seed/parts.json is never imported.
+services:
+  - type: web
+    name: smd-parts-manager
+    runtime: docker
+    plan: 0.5c-512mb
+    region: singapore
+    branch: main
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /healthz
+    envVars:
+      - key: SMD_DB
+        value: /data/smd_parts.db
+      - key: SMD_SEED_DB
+        value: /seed/data/smd_parts.db
+      - key: SMD_OPEN_BROWSER
+        value: "0"
+    disk:
+      name: smd-data
+      mountPath: /data
+      sizeGB: 1

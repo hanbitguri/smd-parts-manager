@@ -1,0 +1,472 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%231d3f86'/%3E%3Ctext x='16' y='22' text-anchor='middle' font-size='14' fill='white' font-family='sans-serif'%3ES%3C/text%3E%3C/svg%3E">
+<title>SMD 부품 관리</title>
+<style>
+:root {
+  --bg: #eef2f6;
+  --ink: #1b2433;
+  --muted: #5d6b80;
+  --card: #fff;
+  --line: #e1e7f0;
+  --navy: #17233b;
+  --blue: #2457d6;
+  --blue-soft: #e8efff;
+  --amber: #b86a12;
+  --red: #c43b48;
+  --shadow: 0 8px 24px rgba(23, 35, 59, .06);
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif;
+}
+header {
+  background: linear-gradient(135deg, #121b2e, #1d3f86 70%, #2a5bd7);
+  color: #fff;
+  padding: 22px 28px;
+  display: flex;
+  gap: 18px;
+  justify-content: space-between;
+  align-items: flex-end;
+}
+h1 { margin: 0 0 6px; font-size: 24px; letter-spacing: -.02em; }
+header p { margin: 0; color: #d5e2ff; font-size: 13px; line-height: 1.5; }
+.topbtns, .toolbar, .rowactions, .modalfoot { display: flex; gap: 8px; flex-wrap: wrap; }
+button, .filebtn {
+  border: 0;
+  border-radius: 8px;
+  padding: 9px 13px;
+  cursor: pointer;
+  font-weight: 650;
+  background: #e7edf6;
+  color: #2c3b55;
+  font: inherit;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+}
+button:hover, .filebtn:hover { filter: brightness(.97); }
+.primary { background: var(--blue); color: #fff; }
+.danger { background: #fff1f2; color: var(--red); }
+header button, header .filebtn { background: rgba(255,255,255,.12); color: #fff; border: 1px solid rgba(255,255,255,.28); }
+.wrap { padding: 22px 28px 40px; max-width: 1680px; margin: 0 auto; }
+.stats { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
+.stat {
+  background: var(--card);
+  border-radius: 12px;
+  padding: 14px 16px;
+  min-width: 148px;
+  box-shadow: var(--shadow);
+}
+.stat span { color: var(--muted); font-size: 12px; }
+.stat b { display: block; margin-top: 4px; font-size: 18px; }
+.panel { background: var(--card); border-radius: 14px; padding: 16px; box-shadow: var(--shadow); }
+.toolbar { margin-bottom: 12px; align-items: center; }
+input, select, textarea {
+  font: inherit;
+  color: var(--ink);
+  background: #fff;
+  border: 1px solid #d5deea;
+  border-radius: 8px;
+  padding: 9px 11px;
+}
+input:focus, select:focus, textarea:focus { outline: 2px solid rgba(36,87,214,.25); border-color: var(--blue); }
+#search { min-width: 240px; flex: 1; }
+.meta { display: flex; justify-content: space-between; gap: 12px; color: var(--muted); font-size: 12px; margin-top: 10px; }
+.tablewrap { overflow: auto; max-height: 64vh; border: 1px solid var(--line); border-radius: 10px; }
+table { border-collapse: collapse; width: 100%; font-size: 13px; white-space: nowrap; }
+th { position: sticky; top: 0; background: #f6f8fc; text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); z-index: 1; }
+th[data-sort] { cursor: pointer; }
+td { padding: 9px 12px; border-bottom: 1px solid #eef2f7; vertical-align: middle; }
+tr:hover td { background: #f7faff; }
+.money, .qty { text-align: right; font-variant-numeric: tabular-nums; }
+.badge { background: var(--blue-soft); color: #2347a8; border-radius: 999px; padding: 3px 8px; font-weight: 700; }
+.pn { font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; font-size: 12px; }
+.clip { max-width: 220px; overflow: hidden; text-overflow: ellipsis; }
+.empty { text-align: center; color: var(--muted); padding: 48px 12px; }
+.rowactions button { padding: 5px 8px; font-size: 12px; }
+.modal { position: fixed; inset: 0; background: rgba(16, 24, 44, .55); display: none; align-items: center; justify-content: center; padding: 18px; z-index: 5; }
+.modal.show { display: flex; }
+.dialog { background: #fff; border-radius: 16px; width: min(760px, 100%); max-height: 92vh; overflow: auto; padding: 22px; }
+.dialog h2 { margin: 0; }
+.when { color: var(--muted); font-size: 12px; min-height: 1.2em; margin: 6px 0 14px; }
+.formgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.field { display: flex; flex-direction: column; gap: 5px; font-size: 13px; font-weight: 700; }
+.field.full { grid-column: 1 / -1; }
+.field span { font-weight: 500; color: var(--muted); }
+.field textarea { min-height: 68px; resize: vertical; }
+.hint { margin-top: 8px; color: var(--amber); font-size: 12px; }
+#toast { position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%); background: var(--navy); color: #fff; padding: 12px 18px; border-radius: 10px; display: none; z-index: 9; }
+@media (max-width: 760px) {
+  header, .wrap { padding: 16px; }
+  header { flex-direction: column; align-items: stretch; }
+  .formgrid { grid-template-columns: 1fr; }
+  .field.full { grid-column: auto; }
+  .stats { display: grid; grid-template-columns: 1fr 1fr; }
+  .stat { min-width: 0; }
+}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>SMD 부품 관리</h1>
+    <p>칩 저항 · 칩캡(MLCC) · 탄탈 커패시터 · 코일 · 다이오드를 한 재고로 봅니다.<br>같은 주소의 다른 사용자 수정은 약 4초마다 반영됩니다.</p>
+  </div>
+  <div class="topbtns">
+    <button type="button" id="importBtn">가져오기</button>
+    <a class="filebtn" href="/api/export?format=xlsx">XLSX</a>
+    <a class="filebtn" href="/api/export?format=csv">CSV</a>
+    <a class="filebtn" href="/api/export?format=json">JSON</a>
+  </div>
+</header>
+<main class="wrap">
+  <div id="stats" class="stats"></div>
+  <section class="panel">
+    <div class="toolbar">
+      <input id="search" placeholder="품번, 값, 규격, 분류, 크기, 비고 검색" autocomplete="off">
+      <select id="category" aria-label="분류"><option value="">전체 분류</option></select>
+      <select id="package" aria-label="크기"><option value="">전체 크기</option></select>
+      <button type="button" id="reset">필터 초기화</button>
+      <button type="button" class="primary" id="add">+ 부품 등록</button>
+    </div>
+    <div class="tablewrap" id="tablewrap">
+      <table>
+        <thead>
+          <tr>
+            <th data-sort="id" data-label="ID">ID</th>
+            <th data-sort="category" data-label="분류">분류</th>
+            <th data-sort="package_size" data-label="크기/케이스">크기/케이스</th>
+            <th data-sort="value" data-label="값">값</th>
+            <th>오차</th>
+            <th>전압</th>
+            <th>재질</th>
+            <th data-sort="part_number" data-label="품번">품번</th>
+            <th data-sort="qty" data-label="수량">수량</th>
+            <th data-sort="unit_price" data-label="단가">단가</th>
+            <th data-sort="supply_amount" data-label="공급가액">공급가액</th>
+            <th data-sort="tax_included" data-label="부가세 포함">부가세 포함</th>
+            <th>원문 규격</th>
+            <th>비고</th>
+            <th>관리</th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+    <div class="meta">
+      <span id="shown">불러오는 중</span>
+      <span id="sync">동기화 대기</span>
+    </div>
+  </section>
+</main>
+<div id="modal" class="modal">
+  <form id="form" class="dialog">
+    <h2 id="modalTitle">부품 등록</h2>
+    <div class="when" id="when"></div>
+    <input type="hidden" id="id">
+    <div class="formgrid">
+      <label class="field">분류
+        <select id="f_category">
+          <option>칩 저항</option>
+          <option>칩캡(MLCC)</option>
+          <option>탄탈 커패시터</option>
+          <option>코일</option>
+          <option>다이오드</option>
+        </select>
+      </label>
+      <label class="field">크기 / 케이스<input id="f_package" list="sizes"></label>
+      <label class="field">저항값 / 용량 / 인덕턴스<input id="f_value"></label>
+      <label class="field">품번 *<input id="f_part" required></label>
+      <label class="field">허용오차<input id="f_tolerance"></label>
+      <label class="field">정격전압<input id="f_voltage"></label>
+      <label class="field">유전체 / 재질<input id="f_dielectric"></label>
+      <label class="field">수량<input id="f_qty" type="number" min="0" step="1" value="0"></label>
+      <label class="field">개당 단가(원)<input id="f_unit" type="number" min="0" step="0.01" value="0"></label>
+      <label class="field">공급가액(원) <span>0이면 자동</span><input id="f_supply" type="number" min="0" step="0.01" value="0"></label>
+      <label class="field">부가세 포함(원) <span>0이면 자동</span><input id="f_tax" type="number" min="0" step="1" value="0"></label>
+      <label class="field full">원문 규격<input id="f_spec"></label>
+      <label class="field full">비고<textarea id="f_notes"></textarea></label>
+    </div>
+    <div class="hint" id="calcHint"></div>
+    <div class="modalfoot">
+      <button type="button" id="cancel">취소</button>
+      <button class="primary" type="submit">저장</button>
+    </div>
+  </form>
+</div>
+<datalist id="sizes"></datalist>
+<input id="file" type="file" accept=".xlsx,.csv,.json,application/json,text/csv" hidden>
+<div id="toast" role="status"></div>
+<script>
+let sort = 'id', dir = 'asc', all = [], lastSig = '', lastStat = '', booted = false, inflight = false, timer;
+const $ = id => document.getElementById(id);
+const won = n => new Intl.NumberFormat('ko-KR', { maximumFractionDigits: 2 }).format(n || 0) + '원';
+function esc(s) {
+  return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+function toast(s) {
+  $('toast').textContent = s;
+  $('toast').style.display = 'block';
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => { $('toast').style.display = 'none'; }, 2800);
+}
+async function api(url, opt) {
+  const r = await fetch(url, Object.assign({ cache: 'no-store' }, opt || {}));
+  const text = await r.text();
+  let data = {};
+  if (text) { try { data = JSON.parse(text); } catch { data = { error: text }; } }
+  if (!r.ok) throw Error(data.error || '요청 실패');
+  return data;
+}
+function markSort() {
+  document.querySelectorAll('th[data-sort]').forEach(th => {
+    const on = th.dataset.sort === sort;
+    th.textContent = th.dataset.label + (on ? (dir === 'asc' ? ' ↑' : ' ↓') : '');
+  });
+}
+function render() {
+  markSort();
+  const el = $('rows');
+  if (!all.length) {
+    el.innerHTML = '<tr><td colspan="15" class="empty">조건에 맞는 부품이 없습니다.</td></tr>';
+    return;
+  }
+  el.innerHTML = all.map(p => `<tr>
+    <td>${p.id}</td>
+    <td><span class="badge">${esc(p.category)}</span></td>
+    <td>${esc(p.package_size)}</td>
+    <td><b>${esc(p.value)}</b></td>
+    <td>${esc(p.tolerance)}</td>
+    <td>${esc(p.voltage)}</td>
+    <td>${esc(p.dielectric)}</td>
+    <td class="pn">${esc(p.part_number)}</td>
+    <td class="qty">${Number(p.qty || 0).toLocaleString('ko-KR')}</td>
+    <td class="money">${won(p.unit_price)}</td>
+    <td class="money">${won(p.supply_amount)}</td>
+    <td class="money">${won(p.tax_included)}</td>
+    <td class="clip" title="${esc(p.original_spec)}">${esc(p.original_spec)}</td>
+    <td class="clip" title="${esc(p.notes)}">${esc(p.notes)}</td>
+    <td><div class="rowactions">
+      <button type="button" data-act="edit" data-id="${p.id}">수정</button>
+      <button type="button" class="danger" data-act="del" data-id="${p.id}">삭제</button>
+    </div></td>
+  </tr>`).join('');
+}
+function renderStats(st) {
+  const sku = st.reduce((a, b) => a + b.skus, 0);
+  const qty = st.reduce((a, b) => a + b.qty, 0);
+  const amt = st.reduce((a, b) => a + b.amount, 0);
+  $('stats').innerHTML =
+    `<div class="stat"><span>전체 품목</span><b>${sku.toLocaleString('ko-KR')} SKU</b></div>` +
+    `<div class="stat"><span>전체 수량</span><b>${qty.toLocaleString('ko-KR')} 개</b></div>` +
+    `<div class="stat"><span>공급가액 합계</span><b>${won(amt)}</b></div>` +
+    st.map(s => `<div class="stat"><span>${esc(s.category)} · ${s.skus}종</span><b>${won(s.amount)}</b></div>`).join('');
+  $('shown').textContent = `${all.length.toLocaleString('ko-KR')}건 표시 · 전체 ${sku.toLocaleString('ko-KR')} SKU`;
+}
+function fillSelect(sel, values, placeholder) {
+  const cur = sel.value;
+  const sig = values.join('\0');
+  if (sel.dataset.sig === sig) return;
+  sel.dataset.sig = sig;
+  sel.innerHTML = `<option value="">${placeholder}</option>` + values.map(v => `<option value="${esc(v)}">${esc(v)}</option>`).join('');
+  sel.value = values.includes(cur) ? cur : '';
+}
+async function refreshFacets() {
+  if (document.activeElement === $('category') || document.activeElement === $('package')) return;
+  const f = await api('/api/facets');
+  fillSelect($('category'), f.categories || [], '전체 분류');
+  fillSelect($('package'), f.package_sizes || [], '전체 크기');
+  $('sizes').innerHTML = (f.package_sizes || []).map(v => `<option value="${esc(v)}"></option>`).join('');
+}
+async function load() {
+  if (inflight) return;
+  inflight = true;
+  try {
+    const q = new URLSearchParams({
+      search: $('search').value,
+      category: $('category').value,
+      package_size: $('package').value,
+      sort, dir
+    });
+    const data = await api('/api/parts?' + q);
+    all = data;
+    const sig = JSON.stringify(data);
+    if (sig !== lastSig) {
+      lastSig = sig;
+      const top = $('tablewrap').scrollTop;
+      render();
+      $('tablewrap').scrollTop = top;
+    } else {
+      markSort();
+    }
+    const st = await api('/api/stats');
+    const ssig = JSON.stringify(st);
+    if (ssig !== lastStat) {
+      lastStat = ssig;
+      renderStats(st);
+    } else {
+      const sku = st.reduce((a, b) => a + b.skus, 0);
+      $('shown').textContent = `${all.length.toLocaleString('ko-KR')}건 표시 · 전체 ${sku.toLocaleString('ko-KR')} SKU`;
+    }
+    $('sync').textContent = '동기화 ' + new Date().toLocaleTimeString('ko-KR') + ' · 4초';
+  } catch (e) {
+    $('sync').textContent = '동기화 실패';
+    if (!booted) throw e;
+  } finally {
+    inflight = false;
+  }
+}
+function setCategory(v) {
+  const sel = $('f_category');
+  if (v && ![...sel.options].some(o => o.value === v)) {
+    const opt = document.createElement('option');
+    opt.value = v;
+    opt.textContent = v;
+    sel.appendChild(opt);
+  }
+  sel.value = v || '칩 저항';
+}
+function hint() {
+  const qty = +$('f_qty').value || 0;
+  const unit = +$('f_unit').value || 0;
+  const supplyIn = +$('f_supply').value || 0;
+  const supply = supplyIn > 0 ? supplyIn : Math.round(qty * unit * 100) / 100;
+  const taxIn = +$('f_tax').value || 0;
+  const tax = taxIn > 0 ? taxIn : Math.round(supply * 1.1);
+  $('calcHint').textContent = `공급가액 ${won(supply)} · 부가세 포함 ${won(tax)} (0이면 저장 때 계산)`;
+}
+function openNew() {
+  $('form').reset();
+  $('id').value = '';
+  $('modalTitle').textContent = '부품 등록';
+  $('when').textContent = '';
+  setCategory('칩 저항');
+  hint();
+  $('modal').classList.add('show');
+  $('f_part').focus();
+}
+function edit(id) {
+  const p = all.find(x => x.id === id);
+  if (!p) return;
+  $('modalTitle').textContent = '부품 수정';
+  $('id').value = id;
+  $('when').textContent = `생성 ${p.created_at || '-'} · 수정 ${p.updated_at || '-'}`;
+  setCategory(p.category);
+  $('f_package').value = p.package_size || '';
+  $('f_value').value = p.value || '';
+  $('f_part').value = p.part_number || '';
+  $('f_tolerance').value = p.tolerance || '';
+  $('f_voltage').value = p.voltage || '';
+  $('f_dielectric').value = p.dielectric || '';
+  $('f_qty').value = p.qty ?? 0;
+  $('f_unit').value = p.unit_price ?? 0;
+  $('f_supply').value = p.supply_amount ?? 0;
+  $('f_tax').value = p.tax_included ?? 0;
+  $('f_spec').value = p.original_spec || '';
+  $('f_notes').value = p.notes || '';
+  hint();
+  $('modal').classList.add('show');
+}
+async function del(id) {
+  const p = all.find(x => x.id === id);
+  const name = p ? p.part_number : id;
+  if (!confirm(`품번 ${name} 을 삭제할까요?`)) return;
+  await api('/api/parts/' + id, { method: 'DELETE' });
+  toast('삭제했습니다.');
+  lastSig = '';
+  await load();
+}
+$('rows').addEventListener('click', async e => {
+  const btn = e.target.closest('button');
+  if (!btn) return;
+  const id = +btn.dataset.id;
+  try {
+    if (btn.dataset.act === 'edit') edit(id);
+    if (btn.dataset.act === 'del') await del(id);
+  } catch (err) { alert(err.message); }
+});
+$('add').onclick = openNew;
+$('cancel').onclick = () => $('modal').classList.remove('show');
+$('modal').onclick = e => { if (e.target === $('modal')) $('cancel').click(); };
+document.addEventListener('keydown', e => { if (e.key === 'Escape') $('modal').classList.remove('show'); });
+['f_qty', 'f_unit', 'f_supply', 'f_tax'].forEach(id => $(id).addEventListener('input', hint));
+$('form').onsubmit = async e => {
+  e.preventDefault();
+  const p = {
+    category: $('f_category').value,
+    package_size: $('f_package').value,
+    value: $('f_value').value,
+    part_number: $('f_part').value,
+    tolerance: $('f_tolerance').value,
+    voltage: $('f_voltage').value,
+    dielectric: $('f_dielectric').value,
+    qty: +$('f_qty').value,
+    unit_price: +$('f_unit').value,
+    supply_amount: +$('f_supply').value,
+    tax_included: +$('f_tax').value,
+    original_spec: $('f_spec').value,
+    notes: $('f_notes').value
+  };
+  const id = $('id').value;
+  try {
+    await api('/api/parts' + (id ? '/' + id : ''), {
+      method: id ? 'PUT' : 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(p)
+    });
+    $('cancel').click();
+    toast('저장했습니다.');
+    lastSig = '';
+    await refreshFacets();
+    await load();
+  } catch (err) { alert(err.message); }
+};
+$('search').oninput = () => { clearTimeout(timer); timer = setTimeout(() => { lastSig = ''; load().catch(e => toast(e.message)); }, 180); };
+$('category').onchange = () => { lastSig = ''; load(); };
+$('package').onchange = () => { lastSig = ''; load(); };
+$('reset').onclick = () => { $('search').value = ''; $('category').value = ''; $('package').value = ''; lastSig = ''; load(); };
+document.querySelectorAll('th[data-sort]').forEach(th => th.onclick = () => {
+  const s = th.dataset.sort;
+  if (sort === s) dir = dir === 'asc' ? 'desc' : 'asc';
+  else { sort = s; dir = 'asc'; }
+  lastSig = '';
+  load();
+});
+$('importBtn').onclick = () => $('file').click();
+$('file').onchange = async () => {
+  const file = $('file').files[0];
+  $('file').value = '';
+  if (!file) return;
+  const fd = new FormData();
+  fd.append('file', file);
+  try {
+    const r = await fetch('/api/import', { method: 'POST', body: fd, cache: 'no-store' });
+    const d = await r.json();
+    if (!r.ok) throw Error(d.error || '가져오기 실패');
+    toast(d.imported + '건을 반영했습니다. 같은 품번은 업데이트됩니다.');
+    lastSig = '';
+    lastStat = '';
+    await refreshFacets();
+    await load();
+  } catch (err) { alert(err.message); }
+};
+setInterval(() => { if (booted) load(); }, 4000);
+document.addEventListener('visibilitychange', () => {
+  if (booted && document.visibilityState === 'visible') load();
+});
+(async () => {
+  await refreshFacets();
+  await load();
+  booted = true;
+})().catch(e => alert(e.message));
+</script>
+</body>
+</html>
