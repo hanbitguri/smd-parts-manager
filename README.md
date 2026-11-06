@@ -8,4 +8,4 @@ The live database is `data/smd_parts.db` (103 parts). The server binds `0.0.0.0:
 go run .
 ```
 
-Open http://127.0.0.1:8080 . There is no public URL until the Render blueprint in `render.yaml` is deployed.
+Open http://127.0.0.1:8080 . `render.yaml` is a free Render web service with no disk. A restart puts the database back to the 103 rows baked into the image. There is no public URL in this repository.
